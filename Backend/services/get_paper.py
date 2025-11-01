@@ -1,25 +1,13 @@
-import requests
-from zipfile import ZipFile
 from pdfminer.high_level import extract_text
+from files import delete_file
 
-response = requests.get("https://www.cbse.gov.in/cbsenew/question-paper/2022/X/Computer_Applications.zip")
+def ocr(pdf_path):
+    try:
+        text = extract_text(pdf_path)
+    except Exception as e:
+        raise RuntimeError(f"Error reading PDF: {e}")
 
-with open("Computer_Applications.zip", "wb") as file:
-    file.write(response.content)
+    delete_file(pdf_path, silent=True)
 
-with ZipFile("Computer_Applications.zip", 'r') as zip_object:
-    zip_object.extractall(".")
+    return text
 
-    
-
-pdf_path = "53_Computer Applications.pdf"
-
-# Extract text
-text = extract_text(pdf_path)
-
-# Print or save the extracted text
-print(text)
-
-# (Optional) Save to a text file
-with open("output.txt", "w", encoding="utf-8") as f:
-    f.write(text)
