@@ -8,9 +8,9 @@ def get_all_tables(html_doc):
     return tables
 
 def get_year_class(url):
-    url = "question-paper/2022/XII/Commercial_Art.zip"
-    parts = url.split('/')  # splits by '/'
-    year = parts[1]         # '2022'
+    parts = url.split('/')  
+    print(parts)
+    year = parts[1]        
     grade = parts[2] 
     return year, grade
 
