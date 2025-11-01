@@ -1,0 +1,5 @@
+fastapi[standard]
+fastapi
+bs4
+requests
+bs4
