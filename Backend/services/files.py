@@ -62,7 +62,6 @@ def merge_pdfs(pdf_list, output_path="/tmp/papers/merged.pdf"):
     except Exception as e:
         raise RuntimeError(f"Failed to merge PDFs: {e}")
 
-
 def extract_zip2pdf(zip_path):
     """Extract ZIP, find all PDFs in all subdirectories, and merge them"""
     extract_dir = "/tmp/papers/"
