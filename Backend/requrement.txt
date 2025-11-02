@@ -1,5 +1,10 @@
-fastapi[standard]
+bs4
+Pillow
 fastapi
-bs4
+uvicorn[standard]
 requests
-bs4
+pdfminer.six
+pytesseract
+pdf2image
+Pillow
+pypdf
