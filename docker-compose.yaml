@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: studyready-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./Backend/services:/app/services
+      - /tmp:/tmp
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped

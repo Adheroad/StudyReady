@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from utils_cbse import get_all_previous_papers_cbse
-from files import download
+from files import download2client
+from get_paper import process_paper
+
 
 app = FastAPI()
 
@@ -60,4 +62,32 @@ async def get_paper(year: str, grade: str, subject: str):
             detail=f"Paper not found for {subject} (Grade {grade}, Year {year})"
         )
     
-    return download(paper)
+    return download2client(paper)
+
+@app.get("/papers/{year}/{grade}/{subject}/text")
+async def get_paper_text(year: str, grade: str, subject: str):
+    papers = get_all_previous_papers_cbse()
+    print("getting papers data")
+    if papers is None:
+        raise HTTPException(status_code=500, detail="Failed to retrieve papers data")
+    
+    paper = None
+    for p in papers:
+        if (p is not None and p['year'] == year and 
+            p['grade'] == grade and 
+            p['subject'].upper() == subject.upper()):
+            paper = p
+            break
+    
+    if not paper:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Paper not found for {subject} (Grade {grade}, Year {year})"
+        )
+    
+    try:
+        print("Printing paper results")
+        text = process_paper(paper)
+        return {"text": text, "subject": subject, "year": year, "grade": grade}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

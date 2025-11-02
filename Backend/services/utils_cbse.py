@@ -9,7 +9,6 @@ def get_all_tables(html_doc):
 
 def get_year_class(url):
     parts = url.split('/')  
-    print(parts)
     year = parts[1]        
     grade = parts[2] 
     return year, grade
