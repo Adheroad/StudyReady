@@ -60,6 +60,7 @@ def merge_pdfs(pdf_list, output_path="/tmp/papers/merged.pdf"):
     except Exception as e:
         raise RuntimeError(f"Failed to merge PDFs: {e}")
 
+
 def extract_zip2pdf(zip_path):
     """Extract ZIP, find all PDFs in all subdirectories, and merge them"""
     extract_dir = "/tmp/papers/"
@@ -69,38 +70,33 @@ def extract_zip2pdf(zip_path):
         with ZipFile(zip_path, 'r') as zip_object:
             zip_object.extractall(extract_dir)
 
-        # Find all PDF files recursively in all subdirectories
         pdf_files = glob.glob(os.path.join(extract_dir, "**/*.pdf"), recursive=True)
         print(f"Found PDFs: {pdf_files}")
-        
+
         if not pdf_files:
             raise FileNotFoundError("No PDF found in the ZIP file.")
-        
+
         print(f"Found {len(pdf_files)} PDFs in ZIP (including subdirectories)")
 
-        # Merge all PDFs into one
-        merged_pdf = merge_pdfs(pdf_files)
-        
-        # Delete original PDFs to save space
-        for pdf in pdf_files:
-            delete_file(pdf, silent=True)
-        
-        # Delete all extracted directories
+        if len(pdf_files) > 1:
+            merged_pdf = merge_pdfs(pdf_files)
+            for pdf in pdf_files:
+                delete_file(pdf, silent=True)
+        else:
+            print(pdf_files)
+            merged_pdf = pdf_files[0]
+
         for item in os.listdir(extract_dir):
             item_path = os.path.join(extract_dir, item)
             if os.path.isdir(item_path):
                 shutil.rmtree(item_path, ignore_errors=True)
-        
-        # Delete the ZIP file
-        delete_file(zip_path, silent=True)
 
+        delete_file(zip_path, silent=True)
         return merged_pdf
-        
+
     except Exception as e:
         delete_file(zip_path, silent=True)
         raise RuntimeError(f"Failed to extract and merge ZIP: {e}")
-
-
     
 def download2local(paper):
     try:
@@ -109,7 +105,6 @@ def download2local(paper):
         
         filename = paper['link'].split('/')[-1]
         local_path = f"/tmp/{filename}"
-        
         with open(local_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=1024 * 1024):
                 if chunk:
