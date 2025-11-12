@@ -6,6 +6,7 @@ import re, os, pytesseract
 
 def ocr(pdf_path, clean_text=True):
     try:
+        print(pdf_path)
         if not os.path.exists(pdf_path):
             raise FileNotFoundError(f"PDF not found: {pdf_path}")
         
@@ -56,9 +57,11 @@ def ocr_from_images(pdf_path, language='eng'):
 
 
 def process_paper(paper):
+    print("inside process")
     local_path = download2local(paper)
     pdf_path = None
-    
+    print("paper downloaded")
+    print(local_path)
     try:
         if local_path.endswith('.zip'):
             pdf_path = extract_zip2pdf(local_path)
@@ -67,6 +70,7 @@ def process_paper(paper):
         else:
             delete_file(local_path, silent=True)
             raise ValueError("Unsupported file format")
+        
         text = ocr(pdf_path)
         
         return text

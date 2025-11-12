@@ -22,4 +22,4 @@ COPY Backend/services ./services
 EXPOSE 8000
 WORKDIR /app/services
 
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
