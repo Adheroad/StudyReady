@@ -18,6 +18,11 @@ Extract ALL questions from this exam paper image. Return a JSON array.
 
 ## CRITICAL RULES:
 
+### Section Handling
+- **Section Persistence**: If a section identifier (A, B, C, अ, ब, etc.) is found on a page, apply it to ALL subsequent questions on that page until a new section identifier appears.
+- Example: If "Section A" appears before Q1, then Q1-Q5 all belong to Section A unless "Section B" appears mid-page.
+- If no section is found on a page, leave `section` as empty string.
+
 ### Bilingual Extraction
 - If questions appear in BOTH English AND Hindi, extract EACH as a SEPARATE entry.
 - Treat English and Hindi versions as independent questions with the same question_number.
