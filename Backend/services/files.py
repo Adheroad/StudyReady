@@ -1,5 +1,7 @@
 from fastapi.responses import StreamingResponse
-import requests, os, glob
+import requests
+import os
+import glob
 from fastapi import HTTPException
 from zipfile import ZipFile
 from pypdf import PdfReader, PdfWriter
