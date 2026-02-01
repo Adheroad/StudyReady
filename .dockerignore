@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+
+# Testing
+test.py
+*.log
+
+# Development
+set-up.sh
+.git/
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Other
+Frontend/
+*.zip
+README.md
