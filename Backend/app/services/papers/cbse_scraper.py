@@ -126,6 +126,10 @@ def _parse_paper_row(row) -> Optional[dict]:
         for part in parts:
             if part.isdigit() and len(part) == 4:
                 year = part
+            elif "-COMPTT" in part.upper():
+                year_part = part.split("-")[0]
+                if year_part.isdigit() and len(year_part) == 4:
+                    year = f"{year_part}-COMPTT"
             elif part.upper() in ("X", "XII", "IX", "XI"):
                 grade = part.upper()
 

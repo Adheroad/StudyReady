@@ -21,6 +21,8 @@ RUN apt-get update && apt-get install -y \
     libjpeg62-turbo-dev \
     zlib1g-dev \
     poppler-utils \
+    fonts-noto-core \
+    fonts-indic \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

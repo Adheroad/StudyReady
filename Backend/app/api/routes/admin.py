@@ -4,6 +4,7 @@ from fastapi import APIRouter, BackgroundTasks
 
 from app.api.deps import SessionDep, SettingsDep
 from app.core.logging import get_logger
+from app.services.extraction.paper_extraction import extract_papers_background
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -17,12 +18,20 @@ async def trigger_extraction(
     background_tasks: BackgroundTasks,
     grade: str = None,
     year: str = None,
-    limit: int = None,
+    limit: int = 10,  # Default limit to avoid long processing
 ):
     """
     Trigger paper extraction for a subject.
 
     Runs in background to avoid timeout.
+    Scrapes papers from CBSE website, downloads PDFs, extracts questions,
+    and generates embeddings.
+    
+    Args:
+        subject: Subject name (e.g., "commercial art", "design")
+        grade: Optional grade filter (e.g., "XII", "X")
+        year: Optional year filter (e.g., "2024")
+        limit: Max papers to process (default: 10)
     """
     logger.info(
         "Extraction triggered",
@@ -32,8 +41,14 @@ async def trigger_extraction(
         limit=limit,
     )
 
-    # TODO: Add background task for extraction
-    # background_tasks.add_task(extract_papers, subject, grade, year, limit)
+    # Add background task
+    background_tasks.add_task(
+        extract_papers_background,
+        subject=subject,
+        grade=grade,
+        year=year,
+        limit=limit,
+    )
 
     return {
         "status": "queued",

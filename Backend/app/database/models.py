@@ -74,9 +74,13 @@ class GeneratedPaper(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     subject = Column(String(100), nullable=False)
     grade = Column(String(10), nullable=False)
+    year = Column(String(20))  # Year for which paper is generated
+    language = Column(String(10), default="en")  # en, hi, or both
     total_marks = Column(Integer)
     question_count = Column(Integer)
+    section_config = Column(JSONB)  # Section structure used
     config = Column(JSONB)  # Store generation parameters
+    formatted_content = Column(Text)  # Markdown formatted paper
     output_pdf_path = Column(Text)
     output_docx_path = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)

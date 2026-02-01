@@ -44,12 +44,62 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="CBSE Question Paper Generator",
-    description="Generate CBSE-format question papers from extracted questions",
-    version="1.0.0",
+    title="StudyReady - CBSE Question Paper Generator API",
+    description="""
+## AI-Powered CBSE Question Paper Generation
+
+Generate pixel-perfect, CBSE-compliant question papers with bilingual support (English + Hindi).
+
+### Key Features
+- 📄 **RAG-Powered Generation**: Intelligent question selection using vector embeddings
+- 🌐 **Bilingual Support**: English and Hindi (Devanagari) in official CBSE format
+- 🎨 **Pixel-Perfect Styling**: Exact recreation of CBSE 2025 paper format
+- 🤖 **LLM Integration**: GPT-4, Claude, Gemini via OpenRouter
+- 📥 **Auto-Extraction**: Scrapes CBSE website and extracts questions with Gemini Vision
+
+### Workflow
+1. **Ingest**: `POST /admin/extract` → Scrape CBSE → Download PDFs → Extract + Embed → Store
+2. **Generate**: `POST /papers/generate` → RAG Retrieval → LLM (JSON) → PDF Export
+
+### Quick Start
+```bash
+# 1. Ingest papers
+curl -X POST "http://localhost:8000/api/v1/admin/extract?subject=commercial%20art&limit=10"
+
+# 2. Generate paper
+curl -X POST "http://localhost:8000/api/v1/papers/generate" \\
+  -H "Content-Type: application/json" \\
+  -d '{"subject":"Commercial Art","grade":"XII","total_marks":36,"language":"both"}'
+```
+
+For complete workflow, see: [kickstart.md](https://github.com/yourusername/StudyReady/blob/main/kickstart.md)
+    """,
+    version="1.0.1",
+    contact={
+        "name": "StudyReady Team",
+        "url": "https://github.com/yourusername/StudyReady",
+    },
+    license_info={
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT",
+    },
     lifespan=lifespan,
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_tags=[
+        {
+            "name": "Papers",
+            "description": "Generate and download CBSE question papers in PDF/DOCX format",
+        },
+        {
+            "name": "Questions",
+            "description": "Search and retrieve questions from the database using semantic search",
+        },
+        {
+            "name": "Admin",
+            "description": "Background paper extraction from CBSE website (scraping + OCR + embedding)",
+        },
+    ],
 )
 
 # CORS middleware

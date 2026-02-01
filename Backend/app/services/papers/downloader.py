@@ -38,6 +38,9 @@ def download_paper(paper: dict) -> str:
     # Check if already downloaded
     if filepath.exists():
         logger.debug("Paper already downloaded", path=str(filepath))
+        # Still need to extract if it's a ZIP
+        if ext == ".zip":
+            return _extract_zip(filepath)
         return str(filepath)
 
     # Download

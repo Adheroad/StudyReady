@@ -16,6 +16,8 @@ engine = create_engine(
     pool_size=5,
     max_overflow=10,
     pool_pre_ping=True,  # Verify connections before use
+    pool_recycle=3600,  # Recycle connections after 1 hour
+    pool_timeout=60,  # Wait up to 60s for connection from pool
     echo=settings.DEBUG,  # Log SQL in debug mode
 )
 

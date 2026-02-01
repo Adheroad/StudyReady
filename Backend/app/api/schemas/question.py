@@ -1,6 +1,7 @@
 """Pydantic schemas for question API."""
 
 from typing import Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -19,8 +20,8 @@ class QuestionBase(BaseModel):
 class QuestionResponse(QuestionBase):
     """Response schema for questions."""
 
-    id: str
-    paper_id: Optional[str] = None
+    id: UUID
+    paper_id: Optional[UUID] = None
     difficulty: Optional[str] = None
     has_diagram: bool = False
 
@@ -42,7 +43,5 @@ class QuestionSearchRequest(BaseModel):
 class QuestionCreate(QuestionBase):
     """Schema for creating a question."""
 
-    paper_id: str
+    paper_id: UUID
     embedding: Optional[list[float]] = None
-
-# TODO we recently had a change in our rag system so we might want to revisit these schemas to see if they need any updates.

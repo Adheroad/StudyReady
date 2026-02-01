@@ -1,172 +1,198 @@
-# CBSE Question Paper Generator
+# StudyReady - CBSE Question Paper Generator
 
-A production-grade FastAPI application that generates CBSE-format question papers using AI-powered extraction and RAG (Retrieval-Augmented Generation).
+AI-powered CBSE question paper generator with pixel-perfect formatting, bilingual support, and RAG-based intelligent question selection.
 
-## Features
+## 🎯 Features
 
-- 📄 **PDF Extraction**: Uses Gemini Vision API to extract questions from CBSE papers
-- 🔍 **Semantic Search**: Vector embeddings with pgvector for intelligent question retrieval
-- 🤖 **AI Generation**: OpenRouter integration for GPT-4o/Claude/Gemini paper formatting
-- 📊 **Production Logging**: Loguru-based structured logging with rotation
-- 🧪 **Testing**: Comprehensive unit, integration, and e2e test suites
+- **📄 CBSE-Compliant PDF**: Exact recreation of official CBSE 2025 format (Commercial Art, XII)
+- **🌐 Bilingual Support**: English + Hindi (Devanagari) in split layout
+- **🤖 RAG-Powered Generation**: Vector search + LLM for contextually relevant questions
+- **🔍 Automatic Extraction**: Scrapes CBSE website → Downloads PDFs → Extracts questions with Gemini Vision
+- **⚡ Background Processing**: Async extraction to avoid timeouts
+- **📊 Structured Output**: JSON-first LLM generation with strict schema validation
+- **🎨 Pixel-Perfect Styling**: WeasyPrint templates with CBSE-accurate typography
 
-## Tech Stack
+## 🏗️ Architecture
 
-| Component | Technology |
-|-----------|------------|
-| Backend | FastAPI |
-| Database | PostgreSQL + pgvector |
-| Extraction | Gemini Vision API |
-| Embeddings | Gemini Embedding API |
-| Generation | OpenRouter (GPT-4o, Claude, etc.) |
-| Export | WeasyPrint (PDF), python-docx (DOCX) |
-| Logging | Loguru |
-| Testing | Pytest |
-
-## Quick Start
-
-### Prerequisites
-
-- Python 3.11+
-- Docker & Docker Compose
-- API Keys: [OpenRouter](https://openrouter.ai/keys) + [Gemini](https://aistudio.google.com/app/apikey)
-
-### Setup
-
-```bash
-# 1. Clone and navigate
-cd Backend
-
-# 2. Copy environment file
-cp .env.example .env
-# Edit .env with your API keys
-
-# 3. Start database
-docker compose up -d
-
-# 4. Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or: venv\Scripts\activate  # Windows
-
-# 5. Install dependencies
-pip install -r requirements.txt
-
-# 6. Test API keys
-python scripts/test_keys.py
-
-# 7. Run development server
-make run
-# or: uvicorn app.main:app --reload
+```mermaid
+graph LR
+    A[CBSE Website] -->|Scrape| B[Downloader]
+    B -->|PDF| C[Gemini Vision]
+    C -->|Questions| D[PostgreSQL + pgvector]
+    D -->|Vector Search| E[Question Selector]
+    E -->|Context| F[LLM via OpenRouter]
+    F -->|JSON| G[Jinja2 Template]
+    G -->|HTML| H[WeasyPrint]
+    H -->|PDF| I[User]
 ```
 
-### Extract Papers
+### Data Flow
+
+1. **Ingestion**: `POST /admin/extract` → Scrape → Download → Extract → Embed → Store
+2. **Generation**: `POST /papers/generate` → RAG Retrieval → LLM (JSON) → Template → PDF
+
+## 🚀 Quick Start
+
+See [`kickstart.md`](./kickstart.md) for full workflow. TL;DR:
 
 ```bash
-# Extract Commercial Art papers (limit to 2 for testing)
-python scripts/extract_papers.py --subject "commercial art" --limit 2
+# 1. Setup
+cp Backend/.env.example Backend/.env  # Add API keys
+docker compose up -d or make d-up
 
-# Extract with grade filter
-python scripts/extract_papers.py --subject "fine arts" --grade XII
+# 2. Ingest papers (background task, limit: 10)
+curl -X POST "http://localhost:8000/api/v1/admin/extract?subject=commercial%20art&grade=XII&limit=10"
 
-# Skip embeddings for faster testing
-python scripts/extract_papers.py --subject design --limit 1 --skip-embeddings
+# 3. Generate paper
+curl -X POST "http://localhost:8000/api/v1/papers/generate" \
+  -H "Content-Type: application/json" \
+  -d '{"subject": "Commercial Art", "grade": "XII", "total_marks": 36, "language": "both"}' \
+  | jq -r '.paper_id' \
+  | xargs -I {} curl "http://localhost:8000/api/v1/papers/{}/download?format=pdf" -o paper.pdf
 ```
 
-### RAG Ingestion Pipeline (Phase 3)
+## 📚 Tech Stack
 
-Store papers in the database with embeddings for semantic search:
+| Layer | Technology |
+|-------|------------|
+| **Backend** | FastAPI, Python 3.11+ |
+| **Database** | PostgreSQL 16 + pgvector |
+| **LLM Gateway** | OpenRouter (GPT-4, Claude, Gemini) |
+| **Vision** | google/gemini-2.0-flash-001 (OCR/extraction) |
+| **Embeddings** | Gemini text-embedding-004 |
+| **PDF Export** | WeasyPrint + Jinja2 |
+| **DOCX Export** | python-docx |
+| **Logging** | Loguru (structured + rotation) |
+| **Container** | Docker + docker-compose |
 
-```bash
-# Ingest papers from CBSE website
-python scripts/ingest_papers.py --subject "mathematics" --grade 12 --limit 5
+## 🔌 API Reference
 
-# Ingest with year filter
-python scripts/ingest_papers.py --subject "physics" --year 2024 --limit 3
-
-# Ingest a local PDF file
-python scripts/ingest_papers.py --pdf /path/to/paper.pdf --subject "chemistry" --grade 12 --year 2024
-```
-
-### Search Questions
-
-```bash
-# Start the server
-make run
-
-# Search via API
-curl -X GET "http://localhost:8000/api/v1/questions/search?subject=mathematics&query=calculus"
-```
-
-## API Endpoints
+### Papers
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/health` | Health check |
-| `POST` | `/api/v1/papers/generate` | Generate question paper |
-| `GET` | `/api/v1/questions/search` | Semantic + metadata search |
-| `POST` | `/api/v1/admin/extract` | Trigger extraction |
-| `GET` | `/api/v1/admin/papers` | List source papers |
+| `POST` | `/api/v1/papers/generate` | Generate CBSE paper (returns paper_id) |
+| `GET` | `/api/v1/papers/{id}` | Get paper metadata |
+| `GET` | `/api/v1/papers/{id}/download?format=pdf` | Download PDF/DOCX |
 
-## Project Structure
+### Questions
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/questions/search?subject=...&query=...` | Semantic search |
+| `GET` | `/api/v1/questions/stats` | Question count by subject |
+
+### Admin
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/admin/extract?subject=...&limit=10` | Trigger background extraction |
+| `GET` | `/api/v1/admin/papers` | List source papers |
+| `GET` | `/api/v1/admin/status` | Extraction status |
+
+## ⚙️ Configuration
+
+Create `Backend/.env` from `.env.example`:
+
+```bash
+# API Keys
+OPENROUTER_API_KEY=sk-or-...
+GEMINI_API_KEY=AIzaSy...
+
+# Database
+DATABASE_URL=postgresql://studyready:password@localhost:5432/studyready
+
+# Models (easily swappable)
+GENERATION_MODEL=x-ai/grok-4.1-fast        # Paper formatting (will switch to better model)
+VISION_MODEL=google/gemini-2.0-flash-001          # Question extraction
+EMBEDDING_MODEL=openai/text-embedding-3-small  # Vector embeddings (will switch to larger model)
+
+# Environment
+ENVIRONMENT=development
+LOG_LEVEL=DEBUG
+```
+
+## 📁 Project Structure
 
 ```
 Backend/
 ├── app/
-│   ├── api/          # Routes and schemas
-│   ├── core/         # Logging, prompts
-│   ├── prompts/      # External prompt templates
-│   ├── database/     # Models, connection
-│   └── services/     # Business logic
-│       ├── papers/       # CBSE scraper, downloader
-│       ├── extraction/   # Gemini Vision
-│       ├── embeddings/   # OpenRouter embeddings
-│       ├── retrieval/    # Vector search, selector
-│       ├── generation/   # OpenRouter (Phase 4)
-│       └── export/       # PDF/DOCX (Phase 4)
-├── scripts/          # CLI tools
-│   ├── test_keys.py      # API key validation
-│   ├── extract_papers.py # Legacy extraction
-│   └── ingest_papers.py  # RAG ingestion pipeline
-├── tests/            # Unit, integration, e2e
-├── docker-compose.yml
+│   ├── api/              # FastAPI routes, schemas, dependencies
+│   ├── core/             # Logging setup
+│   ├── database/         # SQLAlchemy models (Paper, Question, GeneratedPaper)
+│   ├── prompts/          # Externalized LLM prompts
+│   │   ├── paper_formatting.md   # CBSE blueprint + JSON schema
+│   │   └── question_extraction.md
+│   ├── services/
+│   │   ├── extraction/   # Gemini Vision, background tasks
+│   │   ├── embeddings/   # Gemini embeddings
+│   │   ├── generation/   # LLM paper generation
+│   │   ├── retrieval/    # RAG (vector search, question selection)
+│   │   ├── export/       # PDF (WeasyPrint), DOCX (python-docx)
+│   │   └── papers/       # CBSE scraper, downloader
+│   └── templates/
+│       └── paper_pdf.html  # Jinja2 template (CBSE 2025 styling)
+├── scripts/              # CLI utilities
+│   ├── extract_papers.py   # Manual extraction
+│   ├── ingest_papers.py    # Manual ingestion
+│   └── cleanup_images.py   # Cleanup utility
+├── tests/                # Pytest suite
+├── alembic/              # Database migrations
+├── docker-compose.yaml
 └── Makefile
 ```
 
-## Development
+## 🎨 CBSE Paper Styling Highlights
+
+- **Font**: Times New Roman (serif)
+- **Layout**: Split (English full paper → page break → Hindi full paper)
+- **Marks**: Section headers with calculation (e.g., "5 × 2 = 10")
+- **Sub-points**: 
+  - Bullets (`•`) for 2-mark questions
+  - Roman numerals `(i), (ii), (iii)` for 6-mark questions
+- **OR Questions**: Centered separator ("OR" / "अथवा")
+- **Blueprint**: 8 MCQ (1 mark) + 5×2 marks (with OR) + 3×6 marks (sub-parts) = **36 marks**
+
+## 🧪 Development
 
 ```bash
 # Run tests
 make test           # All tests
-make test-unit      # Unit tests only
+make test-unit      # Unit only
 
 # Code quality
-make lint           # Ruff + mypy
+make lint           # Ruff + type checking
 make format         # Auto-format
 
 # Database
-make db-up          # Start DB
-make db-down        # Stop DB
+make d-up          # Start PostgreSQL
+make d-migrate     # Run migrations
+make d-res         # restart
 ```
 
-## Environment Variables
+## 📊 Implementation Status
 
-| Variable | Description |
-|----------|-------------|
-| `OPENROUTER_API_KEY` | OpenRouter API key for LLM + embeddings |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `VISION_MODEL` | Vision model (default: `google/gemini-2.0-flash-001`) |
-| `EMBEDDING_MODEL` | Embedding model (default: `openai/text-embedding-3-small`) |
-| `DEBUG` | Enable debug mode |
+- ✅ **Phase 0**: Logging infrastructure (Loguru)
+- ✅ **Phase 1**: Project setup & configuration
+- ✅ **Phase 2**: Data extraction pipeline (Gemini Vision)
+- ✅ **Phase 3**: RAG system (pgvector + embeddings)
+- ✅ **Phase 4**: Paper generation & export (LLM + PDF/DOCX)
+- ✅ **Phase 6**: Visual refinement (pixel-perfect CBSE styling)
 
-## Implementation Status
+## 🤝 Why OpenRouter?
 
-- [x] Phase 0: Logging infrastructure
-- [x] Phase 1: Project setup & configuration
-- [x] Phase 2: Data extraction pipeline
-- [x] Phase 3: RAG system (vector search, ingestion)
-- [ ] Phase 4: Paper generation & export
+**OpenRouter** provides unified API access to multiple LLM providers:
+- ✅ Single API key for GPT-4, Claude, Gemini, etc.
+- ✅ Easy model switching via env var
+- ✅ No infrastructure overhead
+- ✅ Better quality than self-hosted open-source models for structured JSON generation
 
-## License
+Alternative: HuggingFace would require GPU infrastructure or limited free-tier API.
+
+## 📝 License
 
 MIT
+
+---
+
+**Quick Links**: [`kickstart.md`](./kickstart.md) · [`RAG_GUIDE.md`](./RAG_GUIDE.md)

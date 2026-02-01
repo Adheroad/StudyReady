@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ subject_en }} - CBSE 2025</title>
+    <style>
+        @page {
+            size: 552.75pt 765.35pt;
+            margin: 0.5in 0.5in;
+            margin-bottom: 50pt;
+        }
+
+        /* Named Pages for specific footer control */
+        @page cover {
+            @bottom-center {
+                content: element(footer_cover);
+                width: 100%;
+            }
+        }
+
+        @page hindi {
+            @bottom-center {
+                content: element(footer_hindi);
+                width: 100%;
+            }
+        }
+
+        @page english {
+            @bottom-center {
+                content: element(footer_english);
+                width: 100%;
+            }
+        }
+
+        @page :first {
+            margin-top: 0.3in;
+        }
+
+        body {
+            font-family: 'Century Schoolbook', 'Times New Roman', 'Noto Serif', 'Noto Serif Devanagari', serif;
+            font-size: 10.5pt;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Assign Named Pages to Sections */
+        .section-cover {
+            page: cover;
+        }
+
+        .section-hindi {
+            page: hindi;
+        }
+
+        .section-english {
+            page: english;
+        }
+
+        /* Unique Running Footers */
+        .footer-cover {
+            position: running(footer_cover);
+            width: 100%;
+        }
+
+        .footer-hindi {
+            position: running(footer_hindi);
+            width: 100%;
+        }
+
+        .footer-english {
+            position: running(footer_english);
+            width: 100%;
+        }
+
+        /* Shared Footer Styling */
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 12pt;
+            width: 100%;
+        }
+
+        .footer-left {
+            min-width: 50pt;
+        }
+
+        .footer-center {
+            display: flex;
+            align-items: center;
+            gap: 15pt;
+            margin: 0 auto;
+            white-space: nowrap;
+        }
+
+        .footer-right {
+            min-width: 50pt;
+            text-align: right;
+        }
+
+        .footer-box {
+            border: 1px solid #000;
+            padding: 2pt 8pt;
+            background-color: #000;
+            color: #fff;
+        }
+
+        /* --- Remainder of Styles (Headers, Q-Stats, etc) --- */
+        .cover-header {
+            margin-bottom: 20pt;
+        }
+
+        .header-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 5pt;
+        }
+
+        .series-box {
+            border: 1px solid #000;
+            padding: 4pt 12pt;
+            font-weight: bold;
+            font-size: 16pt;
+        }
+
+        .set-box-wrapper {
+            text-align: right;
+        }
+
+        .set-box {
+            background-color: #000;
+            color: #fff;
+            padding: 2pt 16pt;
+            font-weight: 900;
+            font-size: 16pt;
+            display: inline-block;
+            border: 1px solid #000;
+        }
+
+        .qp-code-section {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 8pt;
+        }
+
+        .qp-code-label {
+            text-align: right;
+            font-size: 11pt;
+            font-weight: 800;
+            margin-right: 12pt;
+            line-height: 1.1;
+        }
+
+        .qp-code-value {
+            font-size: 28pt;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .roll-no-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: 10pt;
+        }
+
+        .roll-no-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .roll-no-title {
+            font-weight: bold;
+            font-size: 14pt;
+            margin-bottom: 5pt;
+            line-height: 1.2;
+        }
+
+        .roll-no-grid {
+            display: flex;
+            border-left: 1px solid #000;
+            margin-top: 5pt;
+        }
+
+        .roll-no-box {
+            width: 28pt;
+            height: 28pt;
+            border: 1px solid #000;
+            border-left: none;
+        }
+
+        .instruction-box {
+            border: 1px solid #000;
+            width: 45%;
+            padding: 8pt;
+            font-size: 10pt;
+            line-height: 1.3;
+        }
+
+        .instruction-box div {
+            margin-bottom: 2pt;
+        }
+
+        .cover-instructions {
+            margin: 20pt 0;
+            font-size: 11pt;
+        }
+
+        .cover-instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .cover-instructions li {
+            position: relative;
+            padding-left: 25pt;
+            margin-bottom: 8pt;
+        }
+
+        .cover-instructions li::before {
+            content: "●";
+            position: absolute;
+            left: 5pt;
+            font-size: 8pt;
+            top: 2pt;
+        }
+
+        .subject-title-block {
+            text-align: center;
+            margin: 30pt 0 20pt 0;
+        }
+
+        .subject-hi {
+            font-size: 20pt;
+            font-weight: bold;
+            margin-bottom: 5pt;
+        }
+
+        .subject-en {
+            font-size: 20pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .subject-subtitle {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-top: 5pt;
+        }
+
+        .meta-table {
+            width: 100%;
+            margin-top: 20pt;
+            font-weight: bold;
+            font-size: 11pt;
+        }
+
+        .meta-table td {
+            vertical-align: bottom;
+        }
+
+        .section-header-block {
+            margin: 40pt 0 20pt 0;
+        }
+
+        .gen-inst-title {
+            font-weight: bold;
+            font-size: 12pt;
+            margin-bottom: 10pt;
+            text-decoration: underline;
+        }
+
+        .sec-list {
+            list-style: none;
+            padding: 0;
+            margin-left: 20pt;
+        }
+
+        .sec-list li {
+            position: relative;
+            padding-left: 20pt;
+            margin-bottom: 10pt;
+        }
+
+        .sec-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .section-title-line {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            margin: 30pt 0 10pt 0;
+            font-weight: bold;
+            font-size: 14pt;
+            position: relative;
+        }
+
+        .section-marks-calc {
+            position: absolute;
+            right: 0;
+        }
+
+        .section-instruction {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20pt;
+        }
+
+        .question {
+            margin-bottom: 20pt;
+            page-break-inside: avoid;
+        }
+
+        .question-header {
+            display: flex;
+            gap: 10pt;
+        }
+
+        .question-num {
+            min-width: 25pt;
+            font-weight: bold;
+        }
+
+        .mcq-options {
+            margin-top: 10pt;
+            margin-left: 35pt;
+        }
+
+        .mcq-option {
+            margin-bottom: 5pt;
+        }
+
+        .or-divider {
+            text-align: center;
+            font-weight: bold;
+            margin: 15pt 0;
+            text-transform: uppercase;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 15pt 0 5pt 0;
+            text-decoration: underline;
+        }
+
+        /* Section Header Block with Marks Calculation */
+        .section-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 5pt;
+        }
+
+        .section-marks-info {
+            font-weight: bold;
+            font-size: 11pt;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-weight: bold;
+            font-size: 11pt;
+            margin-bottom: 10pt;
+        }
+
+        .section-instruction-line {
+            margin-bottom: 15pt;
+            font-size: 10.5pt;
+        }
+
+        /* Question Container - Hanging Indent Style */
+        .question-container {
+            margin-bottom: 15pt;
+            page-break-inside: avoid;
+        }
+
+        .question-row {
+            display: flex;
+            gap: 8pt;
+            margin-bottom: 5pt;
+        }
+
+        .q-num {
+            min-width: 20pt;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .q-text-block {
+            flex: 1;
+            text-align: justify;
+        }
+
+        .q-marks-inline {
+            font-weight: normal;
+        }
+
+        /* Options Grid - Proper Indentation */
+        .q-options-list {
+            margin-top: 5pt;
+            margin-left: 25pt;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .q-option-item {
+            margin-bottom: 3pt;
+        }
+
+        /* Sub-bullets for short-answer (2-mark) questions */
+        .q-sub-bullets {
+            margin-left: 25pt;
+            margin-top: 5pt;
+            padding-left: 20pt;
+            list-style: disc;
+        }
+
+        .q-sub-bullets li {
+            margin-bottom: 5pt;
+            text-align: justify;
+        }
+
+        /* Roman numerals for long-answer (6-mark) questions */
+        .q-sub-roman {
+            margin-left: 25pt;
+            margin-top: 5pt;
+            padding-left: 25pt;
+            list-style-type: lower-roman;
+        }
+
+        .q-sub-roman li {
+            margin-bottom: 5pt;
+            text-align: justify;
+        }
+
+        /* OR Separator */
+        .or-separator {
+            text-align: center;
+            font-weight: bold;
+            margin: 12pt 0;
+            font-size: 11pt;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Running Footers Definitions (Hidden from flow) -->
+    <div class="footer-cover">
+        <div class="footer-content">
+            <div class="footer-left">{{ qp_code_full }}</div>
+            <div class="footer-center">
+                <div class="footer-box">{{ set_box }}</div>
+                <span>Page 1</span>
+                <span>~</span>
+            </div>
+            <div class="footer-right">P.T.O.</div>
+        </div>
+    </div>
+
+    <div class="footer-hindi">
+        <div class="footer-content">
+            <div class="footer-left">{{ qp_code_full }}</div>
+            <div class="footer-center">
+                <span>Page 2</span>
+                <span>~</span>
+            </div>
+            <div class="footer-right"></div>
+        </div>
+    </div>
+
+    <div class="footer-english">
+        <div class="footer-content">
+            <div class="footer-left">{{ qp_code_full }}</div>
+            <div class="footer-center">
+                <span>Page 3</span>
+                <span>~</span>
+            </div>
+            <div class="footer-right">P.T.O.</div>
+        </div>
+    </div>
+
+    <!-- Page 1 Content -->
+    <div class="section-cover">
+        <div class="cover-header">
+            <div class="header-top-row">
+                <div class="series-box">Series : {{ series }}</div>
+                <div class="set-box-wrapper">
+                    <div class="set-box">SET-{{ set_num }}</div>
+                </div>
+            </div>
+            <div class="qp-code-section">
+                <div class="qp-code-label">प्रश्न-पत्र कोड<br>Q.P. Code</div>
+                <div class="qp-code-value">{{ qp_code }}</div>
+            </div>
+            <div class="roll-no-section">
+                <div class="roll-no-left">
+                    <div class="roll-no-title">रोल नं.<br>Roll No.</div>
+                    <div class="roll-no-grid">
+                        {% for i in range(8) %}<div class="roll-no-box"></div>{% endfor %}
+                    </div>
+                </div>
+                <div class="instruction-box">
+                    <div lang="hi" style="font-weight: bold;">परीक्षार्थी प्रश्न-पत्र कोड को उत्तर-पुस्तिका के मुख-पृष्ठ
+                        पर अवश्य लिखें।</div>
+                    <div style="font-style: italic;">Candidates must write the Q.P. Code on the title page of the
+                        answer-book.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cover-instructions">
+            <ul>
+                {% for inst in instructions_hi %}
+                <li lang="hi" style="font-weight: bold;">{{ inst }}</li>
+                {% endfor %}
+                {% for inst in instructions_en %}
+                <li>{{ inst }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="subject-title-block">
+            <div class="subject-hi" lang="hi">{{ subject_hi }}</div>
+            <div class="subject-en">{{ subject_en }} (Theory)</div>
+            <div class="subject-subtitle">{{ subtitle }}</div>
+        </div>
+
+        <table class="meta-table">
+            <tr>
+                <td width="50%">निर्धारित समय : {{ time }} घण्टे<br>Time allowed : {{ time }} hours</td>
+                <td width="50%" align="right">अधिकतम अंक : {{ total_marks }}<br>Maximum Marks : {{ total_marks }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Page 2 Content (Hindi) -->
+
+    <!-- ========================================== -->
+    <!-- PART 1: ENGLISH SECTION (Full Paper) -->
+    <!-- ========================================== -->
+    <div class="english-part-container">
+        <div class="section-header-block">
+            <div class="gen-inst-title">General Instructions :</div>
+            <ul class="sec-list">
+                {% for sec in sections %}
+                <li>
+                    <div style="font-weight: bold; display: inline-block; min-width: 60pt;">{{ sec.name }}</div>
+                    <span>Attempt all questions. (Each question carries 1 mark.)</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% for section in sections %}
+        <div class="section-container">
+            <!-- Section Header with Marks -->
+            <div class="section-header-row">
+                <div></div>
+                <div>
+                    <h2 class="section-title">{{ section.title_en }}</h2>
+                    {% if section.subtitle_en %}
+                    <div class="section-subtitle">{{ section.subtitle_en }}</div>
+                    {% endif %}
+                </div>
+                <div class="section-marks-info">{{ section.questions|length }} × {{ section.questions[0].marks if
+                    section.questions else 1 }} = {{ section.questions|length * (section.questions[0].marks if
+                    section.questions else 1) }}</div>
+            </div>
+            {% if section.instruction_en %}
+            <div class="section-instruction-line">{{ section.instruction_en }}</div>
+            {% endif %}
+
+            {% for q in section.questions %}
+            <div class="question-container">
+                <div class="question-row">
+                    <span class="q-num">{{ q.number }}.</span>
+                    <div class="q-text-block">
+                        {{ q.text_en }} <span class="q-marks-inline">[{{ q.marks }} mark{{ 's' if q.marks > 1 else ''
+                            }}]</span>
+                    </div>
+                </div>
+
+                <!-- Sub-points: Roman numerals for 6+ marks, bullets for others -->
+                {% if q.sub_points_en %}
+                {% if q.marks >= 6 %}
+                <ol class="q-sub-roman">
+                    {% for sp in q.sub_points_en %}
+                    <li>{{ sp }}</li>
+                    {% endfor %}
+                </ol>
+                {% else %}
+                <ul class="q-sub-bullets">
+                    {% for sp in q.sub_points_en %}
+                    <li>{{ sp }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% endif %}
+
+                <!-- MCQ Options -->
+                {% if q.options_en %}
+                <ul class="q-options-list">
+                    {% for opt in q.options_en %}
+                    <li class="q-option-item">({{ opt.label }}) {{ opt.text }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                <!-- OR Alternative Question -->
+                {% if q.or_question %}
+                <div class="or-separator">OR</div>
+                <div class="question-row">
+                    <span class="q-num"></span>
+                    <div class="q-text-block">
+                        {{ q.or_question.text_en }}
+                    </div>
+                </div>
+                {% if q.or_question.sub_points_en %}
+                <ul class="q-sub-bullets">
+                    {% for sp in q.or_question.sub_points_en %}
+                    <li>{{ sp }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% endif %}
+
+                {% if q.image_ref %}
+                <div class="q-image-placeholder">[IMAGE: {{ q.image_ref }}]</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="page-break-before: always;"></div>
+
+    <!-- ========================================== -->
+    <!-- PART 2: HINDI SECTION (Full Paper) -->
+    <!-- ========================================== -->
+    <div class="hindi-part-container" lang="hi">
+        <div class="section-header-block">
+            <div class="gen-inst-title">सामान्य निर्देश :</div>
+            <ul class="sec-list">
+                {% for sec in sections %}
+                <li>
+                    <div style="font-weight: bold; display: inline-block; min-width: 60pt;">{{ sec.name }}</div>
+                    <span>सभी प्रश्नों का उत्तर दें । (प्रत्येक प्रश्न 1 अंक का है ।)</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% for section in sections %}
+        <div class="section-container">
+            <!-- Section Header with Marks (Hindi) -->
+            <div class="section-header-row">
+                <div></div>
+                <div>
+                    <h2 class="section-title">{{ section.title_hi }}</h2>
+                    {% if section.subtitle_hi %}
+                    <div class="section-subtitle">{{ section.subtitle_hi }}</div>
+                    {% endif %}
+                </div>
+                <div class="section-marks-info">{{ section.questions|length }} × {{ section.questions[0].marks if
+                    section.questions else 1 }} = {{ section.questions|length * (section.questions[0].marks if
+                    section.questions else 1) }}</div>
+            </div>
+            {% if section.instruction_hi %}
+            <div class="section-instruction-line">{{ section.instruction_hi }}</div>
+            {% endif %}
+
+            {% for q in section.questions %}
+            <div class="question-container">
+                <div class="question-row">
+                    <span class="q-num">{{ q.number }}.</span>
+                    <div class="q-text-block">
+                        {{ q.text_hi }} <span class="q-marks-inline">[{{ q.marks }} अंक]</span>
+                    </div>
+                </div>
+
+                <!-- Sub-points: Roman numerals for 6+ marks, bullets for others -->
+                {% if q.sub_points_hi %}
+                {% if q.marks >= 6 %}
+                <ol class="q-sub-roman">
+                    {% for sp in q.sub_points_hi %}
+                    <li>{{ sp }}</li>
+                    {% endfor %}
+                </ol>
+                {% else %}
+                <ul class="q-sub-bullets">
+                    {% for sp in q.sub_points_hi %}
+                    <li>{{ sp }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% endif %}
+
+                <!-- MCQ Options -->
+                {% if q.options_hi %}
+                <ul class="q-options-list">
+                    {% for opt in q.options_hi %}
+                    <li class="q-option-item">({{ opt.label }}) {{ opt.text }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                <!-- OR Alternative Question -->
+                {% if q.or_question %}
+                <div class="or-separator">अथवा</div>
+                <div class="question-row">
+                    <span class="q-num"></span>
+                    <div class="q-text-block">
+                        {{ q.or_question.text_hi }}
+                    </div>
+                </div>
+                {% if q.or_question.sub_points_hi %}
+                <ul class="q-sub-bullets">
+                    {% for sp in q.or_question.sub_points_hi %}
+                    <li>{{ sp }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% endif %}
+
+                {% if q.image_ref %}
+                <div class="q-image-placeholder">[IMAGE: {{ q.image_ref }}]</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endfor %}
+    </div>
+
+</body>
+
+</html>

@@ -17,7 +17,6 @@ DEFAULT_SECTION_CONFIG = {
     "D": {"marks": 5, "count": 4, "type": "long"},
     "E": {"marks": 4, "count": 3, "type": "case_study"},
 }
-# TODO again above todo is not correct we may need to process the latest year paper for that subject to get the accurate section config.
 
 
 def select_questions_for_paper(
@@ -167,5 +166,3 @@ def ensure_chapter_diversity(
     )
 
     return diverse
-
-# TODO we might want to add more selection strategies like difficulty balancing, topic coverage etc. also as there are changes in our RAG system we might want to revisit these selection strategies to see if they need any updates.
