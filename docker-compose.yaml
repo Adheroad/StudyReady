@@ -34,5 +34,14 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  frontend:
+    build: ./Frontend
+    container_name: studyready-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
 volumes:
   pgdata:

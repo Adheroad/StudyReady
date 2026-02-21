@@ -33,9 +33,15 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
+    # === JWT Auth ===
+    JWT_SECRET_KEY: str = "studyready-secret-key-change-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+
     # === Paths ===
     DATA_DIR: str = "data"
     LOG_DIR: str = "logs"
+
 
 
 @lru_cache()

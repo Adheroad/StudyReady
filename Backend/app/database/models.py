@@ -87,3 +87,21 @@ class GeneratedPaper(Base):
 
     def __repr__(self) -> str:
         return f"<GeneratedPaper {self.subject} {self.total_marks} marks>"
+
+
+class User(Base):
+    """Model for user authentication."""
+
+    __tablename__ = "users"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    hashed_password = Column(String(255), nullable=False)
+    name = Column(String(100), nullable=True)
+    role = Column(String(20), default="user")  # user, admin
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self) -> str:
+        return f"<User {self.email}>"

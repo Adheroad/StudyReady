@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import admin, papers, questions
+from app.api.routes import admin, auth, papers, questions
 from app.config import get_settings
 from app.core.logging import get_logger, setup_logging
 from app.database.connection import Base, engine
@@ -32,9 +32,21 @@ async def lifespan(app: FastAPI):
     )
 
     # Create tables (for development - use Alembic in production)
-    if settings.DEBUG:
-        Base.metadata.create_all(bind=engine)
-        logger.debug("Database tables created")
+    Base.metadata.create_all(bind=engine)
+    logger.debug("Database tables created")
+
+    # Create admin user on startup
+    from app.database.connection import get_db
+    from app.services.auth import create_admin_user
+    db = next(get_db())
+    try:
+        admin_user = create_admin_user(db)
+        if admin_user:
+            logger.info(f"Admin user ready: {admin_user.email}")
+    except Exception as e:
+        logger.warning(f"Could not create admin user: {e}")
+    finally:
+        db.close()
 
     yield
 
@@ -112,6 +124,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth.router, prefix="/api/v1", tags=["Authentication"])
 app.include_router(papers.router, prefix="/api/v1/papers", tags=["Papers"])
 app.include_router(questions.router, prefix="/api/v1/questions", tags=["Questions"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
