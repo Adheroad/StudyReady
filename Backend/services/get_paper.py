@@ -5,7 +5,7 @@ from files import delete_file, download2local, extract_zip2pdf
 import re
 import os
 import numpy as np
-from paddleocr import PaddleOCR
+
 
 
 def looks_like_garbage(text):
@@ -23,6 +23,7 @@ def ocr_from_images(pdf_path):
         print(f"Found {len(images)} pages")
 
         # Initialize PaddleOCR 3.0
+        from paddleocr import PaddleOCR
         ocr = PaddleOCR(
             use_angle_cls=True,
             lang='en'

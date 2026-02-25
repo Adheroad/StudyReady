@@ -1,4 +1,8 @@
-"""Extract paper blueprint (section structure) from existing papers."""
+"""Extract paper blueprint (section structure) from existing papers.
+
+Now uses pattern_analyzer as primary source for structural templates.
+Falls back to DB-inferred config only if no pattern file exists.
+"""
 
 from collections import defaultdict
 from typing import Optional
@@ -8,13 +12,11 @@ from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
 from app.database.models import Paper, Question
+from app.services.papers.pattern_analyzer import get_pattern
 
 logger = get_logger(__name__)
 
-# Fallback configuration if no papers exist
-# Fallback configuration if no papers exist
-# This is a sensible default for a 70-80 mark paper, or can be scaled.
-# For Commercial Art (36 marks), we expect 16 questions (8x1, 5x2, 3x6).
+# Kept for backward compatibility with old callers
 DEFAULT_SECTION_CONFIG = {
     "A": {"marks": 1, "count": 16, "type": "mcq"},
     "B": {"marks": 2, "count": 5, "type": "short"},

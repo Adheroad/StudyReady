@@ -26,6 +26,8 @@ services:
       - ./Backend:/app
     working_dir: /app
     command: python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - ./Backend/.env
     environment:
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql://studyready:${DB_PASSWORD:-password}@db:5432/studyready

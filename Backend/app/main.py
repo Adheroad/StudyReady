@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import admin, auth, papers, questions
+from app.api.routes import admin, auth, ncert, papers, questions, external_cbse
 from app.config import get_settings
 from app.core.logging import get_logger, setup_logging
 from app.database.connection import Base, engine
@@ -34,6 +34,17 @@ async def lifespan(app: FastAPI):
     # Create tables (for development - use Alembic in production)
     Base.metadata.create_all(bind=engine)
     logger.debug("Database tables created")
+    
+    # Apply database schema patches if needed
+    from sqlalchemy import text
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE generated_papers ADD COLUMN IF NOT EXISTS pattern_hash VARCHAR(64);"))
+            conn.execute(text("ALTER TABLE generated_papers ADD COLUMN IF NOT EXISTS validation_result JSONB;"))
+            conn.execute(text("ALTER TABLE generated_papers ADD COLUMN IF NOT EXISTS question_count INTEGER;"))
+        logger.info("Database schema patched successfully.")
+    except Exception as e:
+        logger.warning(f"Could not patch database schema: {e}")
 
     # Create admin user on startup
     from app.database.connection import get_db
@@ -111,6 +122,14 @@ For complete workflow, see: [kickstart.md](https://github.com/yourusername/Study
             "name": "Admin",
             "description": "Background paper extraction from CBSE website (scraping + OCR + embedding)",
         },
+        {
+            "name": "External CBSE",
+            "description": "Browse and interact with the CBSE website directly (Legacy)",
+        },
+        {
+            "name": "NCERT",
+            "description": "Browse and ingest NCERT textbooks (Class X and XII)",
+        },
     ],
 )
 
@@ -128,6 +147,8 @@ app.include_router(auth.router, prefix="/api/v1", tags=["Authentication"])
 app.include_router(papers.router, prefix="/api/v1/papers", tags=["Papers"])
 app.include_router(questions.router, prefix="/api/v1/questions", tags=["Questions"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
+app.include_router(external_cbse.router, prefix="/api/v1/external", tags=["External CBSE"])
+app.include_router(ncert.router, prefix="/api/v1/ncert", tags=["NCERT"])
 
 
 @app.get("/health")

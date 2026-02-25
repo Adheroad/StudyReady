@@ -1,4 +1,4 @@
-"""Paper generation API routes."""
+"""Paper generation API routes — simplified pipeline-based generation."""
 
 import uuid
 from datetime import datetime
@@ -10,11 +10,8 @@ from sqlalchemy import select
 from app.api.deps import SessionDep, SettingsDep
 from app.api.schemas.paper_schemas import PaperGenerateRequest, PaperResponse
 from app.core.logging import get_logger
-from app.database.models import Question, GeneratedPaper
-from app.services.papers.blueprint_extractor import extract_section_config
-from app.services.retrieval.selector import select_questions_for_paper
-from app.services.retrieval.strategies import apply_selection_strategies
-from app.services.generation.paper_generator import generate_formatted_paper
+from app.database.models import GeneratedPaper
+from app.services.generation.pipeline import generate_paper_pipeline
 from app.services.export import generate_pdf, generate_docx
 
 logger = get_logger(__name__)
@@ -25,113 +22,48 @@ EXPORT_DIR = "data/exports"
 
 @router.post("/generate", response_model=PaperResponse)
 async def generate_paper(
-    request: PaperGenerateRequest,
+    subject: str,
+    target_class: str,
     db: SessionDep,
     settings: SettingsDep,
+    difficulty: str = "medium",
+    pattern: str = "auto",
+    marks: int = 30,
+    language: str = "both",
 ):
     """
-    Generate a question paper.
+    Generate a question paper using the full pipeline.
 
-    - Retrieves questions from database using hybrid search
-    - Selects questions based on marks distribution
-    - Formats into CBSE paper format using LLM
-    - Returns paper content and metadata
+    Simplified API — no manual section_config needed:
+    1. Auto-resolves pattern template from analyzed previous papers
+    2. Retrieves NCERT content for grounding
+    3. Generates via LLM with structural constraints
+    4. Self-validates and auto-corrects
+    5. Returns validated paper
     """
-    
+
     logger.info(
-        "Generating paper",
-        subject=request.subject,
-        grade=request.grade,
-        total_marks=request.total_marks,
-        language=request.language,
+        "Generating paper via pipeline",
+        subject=subject,
+        target_class=target_class,
+        difficulty=difficulty,
     )
 
-    # Step 1: Extract or use section configuration
-    if request.section_config:
-        section_config = request.section_config
-        logger.info("Using provided section config")
-    else:
-        section_config = extract_section_config(
-            db, request.subject, request.grade, request.year
+    try:
+        generated_paper = generate_paper_pipeline(
+            db=db,
+            subject=subject,
+            target_class=target_class,
+            difficulty=difficulty,
+            pattern_id=pattern,
+            marks=marks,
+            language=language,
         )
-        logger.info("Extracted section config", sections=len(section_config))
+    except Exception as e:
+        logger.error("Pipeline failed", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Paper generation failed: {str(e)}")
 
-    # Step 2: Retrieve questions from database
-    query = (
-        select(Question)
-        .where(Question.paper_id.isnot(None))
-    )
-    
-    # Filter by subject (via paper join would be better, but simplified here)
-    # For now, we'll get all questions and rely on selection strategies
-    all_questions = db.execute(query).scalars().all()
-    
-    if not all_questions:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No questions found for {request.subject} {request.grade}",
-        )
-    
-    logger.info(f"Retrieved {len(all_questions)} questions from database")
-
-    # Step 3: Select questions based on section config
-    selected = select_questions_for_paper(
-        all_questions,
-        section_config=section_config,
-        shuffle=True,
-    )
-    
-    # Step 4: Apply enhanced selection strategies
-    selected = apply_selection_strategies(
-        selected,
-        enable_difficulty_balance=True,
-        enable_topic_coverage=True,
-        enable_chapter_diversity=True,
-    )
-    
-    logger.info(f"Selected {len(selected)} questions after strategies")
-
-    # Step 5: Generate formatted paper using LLM
-    formatted_content = generate_formatted_paper(
-        questions=selected,
-        subject=request.subject,
-        grade=request.grade,
-        total_marks=request.total_marks,
-        language=request.language,
-    )
-
-    # Step 6: Save to database
-    generated_paper = GeneratedPaper(
-        id=uuid.uuid4(),
-        subject=request.subject,
-        grade=request.grade,
-        year=request.year,
-        language=request.language,
-        total_marks=request.total_marks,
-        question_count=len(selected),
-        section_config=section_config,
-        config={
-            "include_images": request.include_images,
-            "selection_strategies": {
-                "difficulty_balance": True,
-                "topic_coverage": True,
-                "chapter_diversity": True,
-            },
-        },
-        formatted_content=formatted_content,
-        created_at=datetime.utcnow(),
-    )
-    
-    db.add(generated_paper)
-    db.commit()
-    db.refresh(generated_paper)
-    
-    logger.info(
-        "Paper generated successfully",
-        paper_id=str(generated_paper.id),
-        questions=len(selected),
-    )
-
+    content = generated_paper.formatted_content or ""
     return PaperResponse(
         paper_id=str(generated_paper.id),
         subject=generated_paper.subject,
@@ -139,9 +71,10 @@ async def generate_paper(
         year=generated_paper.year,
         language=generated_paper.language,
         total_marks=generated_paper.total_marks,
-        total_questions=generated_paper.question_count,
-        sections=section_config,
-        preview=formatted_content[:500] + "..." if len(formatted_content) > 500 else formatted_content,
+        total_questions=generated_paper.question_count or 0,
+        sections=generated_paper.section_config or {},
+        validation=generated_paper.validation_result,
+        preview=content[:500] + "..." if len(content) > 500 else content,
         created_at=generated_paper.created_at.isoformat(),
     )
 
@@ -149,19 +82,20 @@ async def generate_paper(
 @router.get("/{paper_id}", response_model=PaperResponse)
 async def get_paper(paper_id: str, db: SessionDep):
     """Get a generated paper by ID."""
-    
+
     try:
         paper_uuid = uuid.UUID(paper_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid paper ID format")
-    
+
     query = select(GeneratedPaper).where(GeneratedPaper.id == paper_uuid)
     result = db.execute(query)
     paper = result.scalar_one_or_none()
-    
+
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
-    
+
+    content = paper.formatted_content or ""
     return PaperResponse(
         paper_id=str(paper.id),
         subject=paper.subject,
@@ -169,9 +103,10 @@ async def get_paper(paper_id: str, db: SessionDep):
         year=paper.year,
         language=paper.language,
         total_marks=paper.total_marks,
-        total_questions=paper.question_count,
+        total_questions=paper.question_count or 0,
         sections=paper.section_config or {},
-        preview=paper.formatted_content[:500] + "..." if len(paper.formatted_content or "") > 500 else paper.formatted_content,
+        validation=paper.validation_result,
+        preview=content[:500] + "..." if len(content) > 500 else content,
         created_at=paper.created_at.isoformat(),
     )
 
@@ -183,23 +118,23 @@ async def download_paper(paper_id: str, format: str = "pdf", db: SessionDep = No
         paper_uuid = uuid.UUID(paper_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid paper ID format")
-    
+
     query = select(GeneratedPaper).where(GeneratedPaper.id == paper_uuid)
     result = db.execute(query)
     paper = result.scalar_one_or_none()
-    
+
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
-    
+
     format_lower = format.lower()
-    
+
     # Markdown format
     if format_lower in ["markdown", "md"]:
         return Response(
             content=paper.formatted_content,
             media_type="text/markdown",
             headers={
-                "Content-Disposition": f"attachment; filename={paper.subject}_{paper.grade}_{paper.year}.md"
+                "Content-Disposition": f"attachment; filename={paper.subject}_{paper.grade}.md"
             },
         )
     # PDF format
@@ -207,59 +142,53 @@ async def download_paper(paper_id: str, format: str = "pdf", db: SessionDep = No
         try:
             filename = f"{paper.subject}_{paper.id}.pdf".replace(" ", "_")
             filepath = f"{EXPORT_DIR}/{filename}"
-            
+
             pdf_bytes = generate_pdf(
                 paper_content=paper.formatted_content,
                 subject=paper.subject,
                 grade=paper.grade,
                 total_marks=paper.total_marks,
-                output_path=filepath
+                output_path=filepath,
             )
-            
-            # Update database with persistent path
+
             paper.output_pdf_path = filepath
             db.commit()
-            
+
             return Response(
                 content=pdf_bytes,
                 media_type="application/pdf",
-                headers={
-                    "Content-Disposition": f"attachment; filename={filename}"
-                },
+                headers={"Content-Disposition": f"attachment; filename={filename}"},
             )
         except Exception as e:
             logger.error(f"PDF generation failed: {e}")
             raise HTTPException(status_code=500, detail=f"PDF generation failed: {str(e)}")
-    
+
     # DOCX format
     elif format_lower in ["docx", "doc"]:
         try:
             filename = f"{paper.subject}_{paper.id}.docx".replace(" ", "_")
             filepath = f"{EXPORT_DIR}/{filename}"
-            
+
             docx_bytes = generate_docx(
                 paper_content=paper.formatted_content,
                 subject=paper.subject,
                 grade=paper.grade,
                 total_marks=paper.total_marks,
-                output_path=filepath
+                output_path=filepath,
             )
-            
-            # Update database with persistent path
+
             paper.output_docx_path = filepath
             db.commit()
-            
+
             return Response(
                 content=docx_bytes,
                 media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                headers={
-                    "Content-Disposition": f"attachment; filename={filename}"
-                },
+                headers={"Content-Disposition": f"attachment; filename={filename}"},
             )
         except Exception as e:
             logger.error(f"DOCX generation failed: {e}")
             raise HTTPException(status_code=500, detail=f"DOCX generation failed: {str(e)}")
-    
+
     else:
         raise HTTPException(
             status_code=400,

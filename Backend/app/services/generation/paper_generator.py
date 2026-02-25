@@ -18,6 +18,7 @@ def _get_client():
     return OpenAI(
         base_url="https://openrouter.ai/api/v1",
         api_key=settings.OPENROUTER_API_KEY,
+        timeout=90.0,
     )
 
 
@@ -96,7 +97,7 @@ def generate_formatted_paper(
                 },
             ],
             temperature=0.3, # Lower temperature for better JSON adherence
-            max_tokens=1500,
+            max_tokens=4096,
             response_format={ "type": "json_object" }
         )
         
@@ -141,7 +142,7 @@ def generate_formatted_paper(
 
 def validate_paper_structure(paper_content: str) -> dict:
     """
-    Validate the generated paper structure.
+    Validate the generated paper structure against v2 JSON schema.
     
     Returns:
         Dict with validation results and warnings
@@ -152,20 +153,49 @@ def validate_paper_structure(paper_content: str) -> dict:
         "stats": {},
     }
     
-    # Check for required sections
-    required_sections = ["CENTRAL BOARD", "GENERAL INSTRUCTIONS", "SECTION"]
-    for section in required_sections:
-        if section not in paper_content:
-            validation["warnings"].append(f"Missing: {section}")
-            validation["valid"] = False
+    try:
+        data = json.loads(paper_content)
+    except (json.JSONDecodeError, TypeError):
+        validation["valid"] = False
+        validation["warnings"].append("Paper content is not valid JSON.")
+        return validation
     
-    # Count questions
-    question_count = paper_content.count("\n1.") + paper_content.count("\n2.")
-    validation["stats"]["estimated_questions"] = question_count
+    sections = data.get("sections", [])
+    if not sections:
+        validation["valid"] = False
+        validation["warnings"].append("No sections found in paper JSON.")
+        return validation
     
-    # Check for OR questions
-    or_count = paper_content.count(" OR ")
+    total_questions = 0
+    total_marks = 0
+    or_count = 0
+    
+    for sec in sections:
+        questions = sec.get("questions", [])
+        total_questions += len(questions)
+        for q in questions:
+            total_marks += q.get("marks", 0)
+            if q.get("or_question"):
+                or_count += 1
+            # Bilingual parity check
+            if q.get("options_en") and not q.get("options_hi"):
+                validation["warnings"].append(f"Q{q.get('number')}: has options_en but missing options_hi")
+            if not q.get("text_hi"):
+                validation["warnings"].append(f"Q{q.get('number')}: missing text_hi")
+    
+    validation["stats"]["total_questions"] = total_questions
+    validation["stats"]["total_marks"] = total_marks
     validation["stats"]["or_questions"] = or_count
+    validation["stats"]["section_count"] = len(sections)
+    
+    expected_marks = data.get("total_marks")
+    if expected_marks and total_marks != expected_marks:
+        validation["warnings"].append(
+            f"Marks mismatch: sections sum to {total_marks}, expected {expected_marks}"
+        )
+    
+    if validation["warnings"]:
+        validation["valid"] = False
     
     logger.debug("Paper validation", extra=validation)
     

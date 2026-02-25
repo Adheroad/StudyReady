@@ -1,8 +1,7 @@
 """Database connection and session management."""
 
-from typing import Annotated, Generator
+from typing import Generator
 
-from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
@@ -47,7 +46,3 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
-
-
-# Type alias for dependency injection (FastAPI pattern)
-SessionDep = Annotated[Session, Depends(get_db)]

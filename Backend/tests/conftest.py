@@ -18,7 +18,6 @@ def test_settings():
     """Test settings with mock values."""
     return Settings(
         OPENROUTER_API_KEY="test-openrouter-key",
-        GEMINI_API_KEY="test-gemini-key",
         DATABASE_URL="sqlite:///:memory:",
         DEBUG=True,
         ENVIRONMENT="development",
@@ -106,34 +105,29 @@ def sample_questions(db_session, sample_paper):
 
 
 @pytest.fixture
-def mock_gemini():
-    """Mock Gemini API responses."""
-    with patch("google.generativeai.GenerativeModel") as mock_model:
-        instance = MagicMock()
-        instance.generate_content.return_value.text = """
-        [
-            {"question_number": "1", "question_text": "Test question", "marks": 1}
-        ]
-        """
-        mock_model.return_value = instance
-
-        with patch("google.generativeai.configure"):
-            with patch("google.generativeai.upload_file") as mock_upload:
-                mock_file = MagicMock()
-                mock_file.state.name = "ACTIVE"
-                mock_upload.return_value = mock_file
-
-                with patch("google.generativeai.delete_file"):
-                    yield mock_model
+def mock_vision_client():
+    """Mock OpenAI-compatible Vision client (used via OpenRouter)."""
+    with patch("app.services.extraction.gemini_vision._get_client") as mock_get:
+        client = MagicMock()
+        response = MagicMock()
+        response.choices = [MagicMock(message=MagicMock(content='''
+        [{"question_number": "1", "question_text": "Test question", "marks": 1}]
+        '''))]
+        client.chat.completions.create.return_value = response
+        mock_get.return_value = client
+        yield mock_get
 
 
 @pytest.fixture
 def mock_embedding():
-    """Mock Gemini embedding API."""
-    with patch("google.generativeai.embed_content") as mock:
-        mock.return_value = {"embedding": [0.1] * 768}
-        with patch("google.generativeai.configure"):
-            yield mock
+    """Mock embedding API (1536d for text-embedding-3-small)."""
+    with patch("app.services.embeddings.gemini_embeddings._get_client") as mock_get:
+        client = MagicMock()
+        response = MagicMock()
+        response.data = [MagicMock(embedding=[0.1] * 1536)]
+        client.embeddings.create.return_value = response
+        mock_get.return_value = client
+        yield mock_get
 
 
 @pytest.fixture

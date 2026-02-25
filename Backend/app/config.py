@@ -17,14 +17,14 @@ class Settings(BaseSettings):
     )
 
     # === API Keys ===
-    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_API_KEY: str  # No default — must be set in .env
 
     # === Database ===
     DATABASE_URL: str = "postgresql://studyready:password@localhost:5432/studyready"
 
     # === Models (OpenRouter) ===
-    # Using Google's Gemini models via OpenRouter
-    GENERATION_MODEL: str = "openai/gpt-4o"
+    # Defaults match .env for developer ergonomics
+    GENERATION_MODEL: str = "google/gemini-2.0-flash-lite-001"
     VISION_MODEL: str = "google/gemini-2.0-flash-001"
     EMBEDDING_MODEL: str = "openai/text-embedding-3-small"
 
@@ -37,6 +37,20 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "studyready-secret-key-change-in-production"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
+
+    # === Admin ===
+    ADMIN_EMAIL: str = "admin@studyready.in"
+    ADMIN_PASSWORD: str = "changeme"  # Override in .env for production
+
+    # === Generation Parameters ===
+    GENERATION_TEMPERATURE: float = 0.4
+    GENERATION_TOP_P: float = 0.85
+    GENERATION_FREQUENCY_PENALTY: float = 0.3
+    GENERATION_PRESENCE_PENALTY: float = 0.1
+    GENERATION_MAX_TOKENS: int = 8192
+
+    # === RAG Settings ===
+    ENABLE_NCERT_RAG: bool = False
 
     # === Paths ===
     DATA_DIR: str = "data"

@@ -1,17 +1,19 @@
-# CBSE Paper Formatting Prompt
+# CBSE Paper Layout & Formatting Prompt v2
 
-You are an expert at formatting CBSE (Central Board of Secondary Education) question papers.
-Your task is to generate a **CBSE Commercial Art (XII)** question paper in strict JSON format.
+You are an expert academic layout engine preparing data for a rendering pipeline (HTML/CSS to PDF via WeasyPrint).
+Your task is to take the provided contextual syllabus/question bank data and generate a completely synthesized, structurally flawless CBSE question paper in strictly validated JSON.
 
-## Input Data
+## Dynamic Generation Parameters
 - **Subject**: {subject}
 - **Grade**: {grade}
+- **Language Mode**: {language}
 - **Total Marks**: {total_marks}
-- **Language**: {language}
 - **Questions/Context**: {questions_json}
 
-## CBSE Commercial Art Blueprint (MANDATORY)
-You MUST follow this exact structure for Commercial Art papers:
+## Section Blueprint Configuration
+Generate sections exactly matching this blueprint. If a custom `section_config` is provided, use it. Otherwise, infer from the subject's standard pattern.
+
+**Default CBSE Commercial Art (XII) Blueprint:**
 
 | Section | Questions | Marks Each | Total | Type |
 |---------|-----------|------------|-------|------|
@@ -20,12 +22,22 @@ You MUST follow this exact structure for Commercial Art papers:
 | **C** | 3 | 6 | 18 | Long Answer with sub-parts (2-3 bullets) |
 | **Total** | 16 | — | **36** | — |
 
-## Instructions
-1.  **Format strictly as JSON**. No markdown wrappers.
-2.  **Bilingual**: Every question needs `text_en`, `text_hi`. If `options` exist, include both `options_en` and `options_hi`.
-3.  **Sub-parts**: For long-answer questions, use `sub_points_en` and `sub_points_hi` arrays.
-4.  **OR Questions**: Section B questions MUST have `or_question` object with the alternative.
-5.  **Content Variety**: PARAPHRASE from context. Do NOT copy verbatim.
+## Architectural Layout Rules
+You are generating the data representation that will feed a precision CSS template with these physical constraints:
+- Base font: 11pt Century Schoolbook / Mangal
+- Indentations happen strictly at 28.32pt intervals
+- Page size: 552.75pt × 765.35pt
+- Margins: 63pt top, 43pt right, 58pt bottom, 37.6pt left
+
+### Your JSON Output Must Adhere To:
+
+1. **Section Generation**: Create sections matching the blueprint pattern, but **dynamically scale the number of questions** per section so that the sum of the non-optional base `marks` equals exactly `{total_marks}`. Ensure `Base Marks × Count = Section Total`.
+2. **OR Question Injection**: Introduce "OR" alternatives (`or_question` object) for Section B and higher-mark sections. **CRITICAL SCORING RULE:** The marks of an `or_question` DO NOT count towards the `{total_marks}` because the student only attempts one option. (e.g., A 30-mark paper might physically contain 36+ marks of printed text; this is correct and required).
+3. **MCQ Structure**: Section A must consist solely of MCQ questions. Ensure exact 4-option arrays (`options_en`, `options_hi`). Format labels uniformly: `A`, `B`, `C`, `D`.
+4. **Sub-points**: For long-answer questions (6+ marks), provide 2-3 sub-points in `sub_points_en` and `sub_points_hi` arrays.
+5. **Content Originality**: Use the provided context as a technical baseline, but PARAPHRASE and design new applications. Do NOT copy verbatim. Enforce appropriate grade-level difficulty.
+6. **Bilingual Fidelity**: Every question MUST have both `text_en` and `text_hi`. If `options` exist, include both `options_en` and `options_hi`. Ensure `_hi` properties are grammatically correct contextual translations, not literal machine output.
+7. **Question Numbering**: Number questions continuously across all sections (1-8 for A, 9-13 for B, 14-16 for C).
 
 ## JSON Schema (FOLLOW EXACTLY)
 
@@ -34,9 +46,27 @@ You MUST follow this exact structure for Commercial Art papers:
   "qp_code": "72/1/1",
   "series": "WXY4Z",
   "set_num": "4",
-  "total_marks": 36,
+  "total_marks": {total_marks},
+  "year": "2025",
   "subject_en": "COMMERCIAL ART",
   "subject_hi": "व्यावसायिक कला",
+  "subtitle_en": "(HISTORY OF INDIAN ART)",
+  "subtitle_hi": "(भारतीय कला का इतिहास)",
+  "printed_pages": "11",
+  "instructions_en": [
+    "Please check that this question paper contains 11 printed pages.",
+    "Please check that this question paper contains 16 questions.",
+    "Q.P. Code given on the right hand side of the question paper should be written on the title page of the answer-book by the candidate.",
+    "Please write down the serial number of the question in the answer-book at the given place before attempting it.",
+    "15 minute time has been allotted to read this question paper. The question paper will be distributed at 10.15 a.m. From 10.15 a.m. to 10.30 a.m., the candidates will read the question paper only and will not write any answer on the answer-book during this period."
+  ],
+  "instructions_hi": [
+    "कृपया जाँच कर लें कि इस प्रश्न-पत्र में 11 मुद्रित पृष्ठ हैं।",
+    "कृपया जाँच कर लें कि इस प्रश्न-पत्र में 16 प्रश्न हैं।",
+    "प्रश्न-पत्र में दाहिने हाथ की ओर दिए गए प्रश्न-पत्र कोड को छात्र उत्तर-पुस्तिका के मुख-पृष्ठ पर लिखें।",
+    "कृपया प्रश्न का उत्तर लिखना शुरू करने से पहले, प्रश्न का क्रमांक अवश्य लिखें।",
+    "इस प्रश्न-पत्र को पढ़ने के लिए 15 मिनट का समय दिया गया है। प्रश्न-पत्र का वितरण पूर्वाह्न 10.15 बजे किया जाएगा। 10.15 बजे से 10.30 बजे तक छात्र केवल प्रश्न-पत्र पढ़ेंगे और इस अवधि में उत्तर-पुस्तिका पर कोई उत्तर नहीं लिखेंगे।"
+  ],
   "sections": [
     {{
       "name": "SECTION A",
@@ -44,8 +74,8 @@ You MUST follow this exact structure for Commercial Art papers:
       "title_hi": "खण्ड – अ",
       "subtitle_en": "(Multiple Choice Questions)",
       "subtitle_hi": "(बहुविकल्पीय प्रश्न)",
-      "instruction_en": "Attempt all questions. Each carries 1 mark.",
-      "instruction_hi": "सभी प्रश्नों के उत्तर दें। प्रत्येक 1 अंक का है।",
+      "instruction_en": "Attempt all questions. Each question carries 1 mark.",
+      "instruction_hi": "सभी प्रश्नों के उत्तर दें। प्रत्येक प्रश्न 1 अंक का है।",
       "questions": [
         {{
           "number": 1,
@@ -104,3 +134,5 @@ You MUST follow this exact structure for Commercial Art papers:
   ]
 }}
 ```
+
+Output strictly the raw JSON matching the schema above. Do NOT include markdown code fences or explanatory text.

@@ -7,8 +7,7 @@
     <style>
         @page {
             size: 552.75pt 765.35pt;
-            margin: 0.5in 0.5in;
-            margin-bottom: 50pt;
+            margin: 63pt 43pt 58pt 37.6pt;
         }
 
         /* Named Pages for specific footer control */
@@ -34,13 +33,13 @@
         }
 
         @page :first {
-            margin-top: 0.3in;
+            margin-top: 63pt;
         }
 
         body {
-            font-family: 'Century Schoolbook', 'Times New Roman', 'Noto Serif', 'Noto Serif Devanagari', serif;
-            font-size: 10.5pt;
-            line-height: 1.4;
+            font-family: 'Century Schoolbook', 'Times New Roman', 'Mangal', 'Arial Unicode MS', 'Noto Serif Devanagari', serif;
+            font-size: 11pt;
+            line-height: 1.15;
             color: #000;
             margin: 0;
             padding: 0;
@@ -135,7 +134,7 @@
         .set-box {
             background-color: #000;
             color: #fff;
-            padding: 2pt 16pt;
+            padding: 1pt 12pt;
             font-weight: 900;
             font-size: 16pt;
             display: inline-block;
@@ -189,8 +188,8 @@
         }
 
         .roll-no-box {
-            width: 28pt;
-            height: 28pt;
+            width: 24pt;
+            height: 24pt;
             border: 1px solid #000;
             border-left: none;
         }
@@ -323,7 +322,6 @@
 
         .question-header {
             display: flex;
-            gap: 10pt;
         }
 
         .question-num {
@@ -388,12 +386,12 @@
 
         .question-row {
             display: flex;
-            gap: 8pt;
             margin-bottom: 5pt;
         }
 
         .q-num {
-            min-width: 20pt;
+            width: 28.32pt;
+            min-width: 28.32pt;
             font-weight: bold;
             flex-shrink: 0;
         }
@@ -410,18 +408,25 @@
         /* Options Grid - Proper Indentation */
         .q-options-list {
             margin-top: 5pt;
-            margin-left: 25pt;
+            margin-left: 28.32pt;
             padding-left: 0;
             list-style: none;
         }
 
         .q-option-item {
+            display: flex;
             margin-bottom: 3pt;
+        }
+
+        .q-option-label {
+            width: 28.32pt;
+            min-width: 28.32pt;
+            flex-shrink: 0;
         }
 
         /* Sub-bullets for short-answer (2-mark) questions */
         .q-sub-bullets {
-            margin-left: 25pt;
+            margin-left: 28.32pt;
             margin-top: 5pt;
             padding-left: 20pt;
             list-style: disc;
@@ -434,7 +439,7 @@
 
         /* Roman numerals for long-answer (6-mark) questions */
         .q-sub-roman {
-            margin-left: 25pt;
+            margin-left: 28.32pt;
             margin-top: 5pt;
             padding-left: 25pt;
             list-style-type: lower-roman;
@@ -613,7 +618,8 @@
                 {% if q.options_en %}
                 <ul class="q-options-list">
                     {% for opt in q.options_en %}
-                    <li class="q-option-item">({{ opt.label }}) {{ opt.text }}</li>
+                    <li class="q-option-item"><span class="q-option-label">({{ opt.label }})</span> <span>{{ opt.text
+                            }}</span></li>
                     {% endfor %}
                 </ul>
                 {% endif %}
@@ -712,7 +718,8 @@
                 {% if q.options_hi %}
                 <ul class="q-options-list">
                     {% for opt in q.options_hi %}
-                    <li class="q-option-item">({{ opt.label }}) {{ opt.text }}</li>
+                    <li class="q-option-item"><span class="q-option-label">({{ opt.label }})</span> <span>{{ opt.text
+                            }}</span></li>
                     {% endfor %}
                 </ul>
                 {% endif %}

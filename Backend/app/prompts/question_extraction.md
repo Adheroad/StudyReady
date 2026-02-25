@@ -1,63 +1,105 @@
-# Question Extraction Prompt
+# CBSE Exam Paper Extraction Prompt v2
 
-Extract ALL questions from this exam paper image. Return a JSON array.
+You are an expert OCR and academic parsing engine. Your task is to extract ALL content from the provided exam paper images and structure it strictly according to the hierarchical JSON schema below.
 
-## For EACH question, extract:
-1. question_number: The question number as shown (e.g., "1", "2a", "13")
-2. question_text: Full question text, preserving formatting and mathematical notation (LaTeX)
-3. marks: Integer marks for the question
-4. section: Section identifier (A, B, C, D, अ, ब, स, द)
-5. question_type: "mcq", "short", "long", or "practical"
-6. chapter: Inferred chapter/unit name
-7. topic: Specific topic within the chapter
-8. difficulty: "easy", "medium", or "hard"
-9. language: "en" or "hi" (detect from text)
-10. has_diagram: true if the question includes/references a diagram or image
-11. image_description: If has_diagram is true, describe the image in detail for regeneration
-12. bounding_box: [ymin, xmin, ymax, xmax] (0-1000 scale) if has_diagram is true
+## CRITICAL EXTRACTION RULES
 
-## CRITICAL RULES:
+### 1. Bilingual Consolidation
+- Official papers often print the entire English version, followed by the entire Hindi version.
+- **DO NOT** create separate entries for Hindi and English versions of the same question.
+- You MUST consolidate them into the SAME JSON object using the `_en` and `_hi` field suffixes (e.g., `text_en`, `text_hi`, `options_en`, `options_hi`).
+- Match them by `question_number`.
 
-### Section Handling
-- **Section Persistence**: If a section identifier (A, B, C, अ, ब, etc.) is found on a page, apply it to ALL subsequent questions on that page until a new section identifier appears.
-- Example: If "Section A" appears before Q1, then Q1-Q5 all belong to Section A unless "Section B" appears mid-page.
-- If no section is found on a page, leave `section` as empty string.
+### 2. Section Persistence
+- If a section identifier (A, B, C, अ, ब, etc.) is found on a page, apply it to ALL subsequent questions on that page until a new section identifier appears.
+- If no section is found on a page, inherit from the previous page.
 
-### Bilingual Extraction
-- If questions appear in BOTH English AND Hindi, extract EACH as a SEPARATE entry.
-- Treat English and Hindi versions as independent questions with the same question_number.
-
-### OR / ATHVA Questions (VERY IMPORTANT)
-- Questions with **"OR"**, **"अथवा"** (Athva), **"या"**, or similar alternatives are **SINGLE questions**.
+### 3. OR / ATHVA Questions (MANDATORY)
+- Questions separated by **"OR"**, **"अथवा"**, or **"या"** inside the same question number block are a **SINGLE** entity.
 - Do NOT split them into separate entries.
-- Include the FULL text with both options in one `question_text` field.
-- Example: A question like "Q13: ... OR Q13 alternative..." should be ONE entry.
+- Extract the first part into the main fields (`text_en`, `text_hi`).
+- Extract the alternative part into the nested `or_question` object with its own `text_en`, `text_hi`, `sub_points_en`, `sub_points_hi`.
 
-### Formatting
-- Preserve mathematical notation as LaTeX (e.g., $\frac{a}{b}$)
-- Preserve bullet points and sub-parts
-- Include all MCQ options (A, B, C, D) in the question_text
+### 4. Hierarchical Sub-points
+- If a question has bullet points (e.g., i, ii, iii or bullets), do NOT dump them into the main text string.
+- Array them neatly into `sub_points_en` and `sub_points_hi`.
+- Example Text: "Critically appreciate: (i) Origin (ii) Medium".
+  - `text_en`: "Critically appreciate:"
+  - `sub_points_en`: ["(i) Origin", "(ii) Medium"]
 
-## Output Format:
+### 5. MCQ Options
+- For MCQ questions, extract ALL 4 options into `options_en` and `options_hi` arrays.
+- Each option is an object: `{"label": "A", "text": "Option text"}`.
+- Labels MUST be uppercase single letters: A, B, C, D.
+
+### 6. Mathematical & Scientific Notation
+- Preserve ALL equations and formulas using precise LaTeX syntax.
+- Wrap inline math in `$` and block math in `$$`.
+
+### 7. Metadata Extraction
+- From the cover page, extract:
+  - `qp_code` (e.g., "72/1/1")
+  - `series` (e.g., "WXY4Z")
+  - `set_num` (e.g., 4)
+  - `time_allowed_hours` (e.g., 2)
+  - `total_marks` (e.g., 30)
+  - `subject_en`, `subject_hi`
+  - `grade` (e.g., "XII")
+  - `year` (e.g., 2025)
+- From the instruction blocks, extract `instructions_en` and `instructions_hi` as string arrays.
+
+### 8. Image / Diagram Detection
+- If a question includes or references a diagram/image, set `image_ref` to a descriptive identifier (e.g., "painting_rajasthani_miniature").
+- Do NOT attempt to extract the image itself.
+
+### 9. Edge Case Handling
+- **Hyphenation artifacts**: If a word is broken across lines with a hyphen (e.g., "compo-\nsition"), rejoin it as "composition".
+- **OCR noise**: Clean up stray characters that don't belong to the text.
+- **Multi-line titles**: Concatenate multi-line question text into a single string.
+
+## Output JSON Schema
+
 ```json
 {
-  "questions": [
+  "metadata": {
+    "subject_en": "COMMERCIAL ART",
+    "subject_hi": "व्यावसायिक कला",
+    "grade": "XII",
+    "year": 2025,
+    "qp_code": "72/1/1",
+    "series": "WXY4Z",
+    "set_num": 4,
+    "total_marks": 30,
+    "time_allowed_hours": 2,
+    "instructions_en": ["Please check that this question paper contains 11 printed pages.", "..."],
+    "instructions_hi": ["कृपया जाँच कर लें कि इस प्रश्न-पत्र में 11 मुद्रित पृष्ठ हैं।", "..."]
+  },
+  "sections": [
     {
-      "question_number": "1",
-      "question_text": "Full question text here...",
-      "marks": 1,
-      "section": "A",
-      "question_type": "mcq",
-      "chapter": "Chapter Name",
-      "topic": "Topic Name",
-      "difficulty": "medium",
-      "language": "en",
-      "has_diagram": false,
-      "image_description": null,
-      "bounding_box": null
+      "name": "SECTION A",
+      "title_en": "SECTION – A",
+      "title_hi": "खण्ड – अ",
+      "subtitle_en": "(Multiple Choice Questions)",
+      "subtitle_hi": "(बहुविकल्पीय प्रश्न)",
+      "instruction_en": "Attempt all questions. Each carries 1 mark.",
+      "instruction_hi": "सभी प्रश्नों के उत्तर दें। प्रत्येक 1 अंक का है।",
+      "questions": [
+        {
+          "number": 1,
+          "marks": 1,
+          "text_en": "Which painting depicts...",
+          "text_hi": "किस चित्र में...",
+          "options_en": [{"label": "A", "text": "Option 1"}, {"label": "B", "text": "Option 2"}, {"label": "C", "text": "Option 3"}, {"label": "D", "text": "Option 4"}],
+          "options_hi": [{"label": "A", "text": "विकल्प 1"}, {"label": "B", "text": "विकल्प 2"}, {"label": "C", "text": "विकल्प 3"}, {"label": "D", "text": "विकल्प 4"}],
+          "sub_points_en": null,
+          "sub_points_hi": null,
+          "or_question": null,
+          "image_ref": null
+        }
+      ]
     }
   ]
 }
 ```
 
-Return ONLY the JSON object. No explanations or markdown.
+Return ONLY the raw JSON object. No explanations, no markdown code fences.

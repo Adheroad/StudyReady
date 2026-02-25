@@ -4,7 +4,7 @@ from app.config import get_settings
 from app.core.logging import get_logger
 from app.database.connection import SessionLocal
 from app.database.models import Paper, Question
-from app.services.embeddings.gemini_embeddings import generate_embedding
+from app.services.embeddings.gemini_embeddings import generate_embedding, EmbeddingError
 from app.services.extraction.gemini_vision import extract_questions_from_pdf
 from app.services.papers.cbse_scraper import get_papers_by_subject
 from app.services.papers.downloader import download_paper
@@ -146,8 +146,12 @@ def _process_single_paper(db, paper_info: dict, skip_embeddings: bool = False):
         if not skip_embeddings:
             try:
                 embedding = generate_embedding(q["question_text"])
-            except Exception as e:
-                logger.warning("Failed to generate embedding", error=str(e))
+            except (EmbeddingError, ValueError) as e:
+                logger.warning(
+                    "Failed to generate embedding, storing without vector",
+                    error=str(e),
+                    question_number=q.get("question_number"),
+                )
 
         question = Question(
             paper_id=paper.id,

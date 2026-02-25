@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
-from app.database.models import Question, Paper
+from app.database.models import Question, Paper, NCERTContent, IngestionRegistry
 from app.services.embeddings.gemini_embeddings import generate_query_embedding
 from app.core.logging import get_logger
 
@@ -151,4 +151,57 @@ def get_similar_questions(
     )
 
     results = db.execute(stmt).scalars().all()
+    return list(results)
+# Dictionary of common subject name mismatches (PYQ name -> NCERT name)
+SUBJECT_ALIASES = {
+    "commercial art": "fine art",
+    # Add other synonyms here as needed
+}
+
+def search_ncert_content(
+    db: Session,
+    query: str,
+    subject: Optional[str] = None,
+    target_class: Optional[str] = None,
+    limit: int = 20,
+) -> list[NCERTContent]:
+    """
+    Perform vector search on chunked NCERT textbook content.
+
+    Args:
+        db: Database session
+        query: Semantic search query
+        subject: Optional subject filter
+        target_class: Optional class filter ("10", "12")
+        limit: Max results
+
+    Returns:
+        List of NCERTContent chunks ordered by similarity
+    """
+    query_embedding = generate_query_embedding(query)
+
+    stmt = select(NCERTContent).join(IngestionRegistry, NCERTContent.registry_id == IngestionRegistry.id)
+    
+    filters = [NCERTContent.embedding.isnot(None)]
+    
+    if subject:
+        # Resolve common naming differences between CBSE exams and NCERT books
+        subject_lower = subject.lower()
+        resolved_subject = SUBJECT_ALIASES.get(subject_lower, subject)
+        filters.append(IngestionRegistry.subject.ilike(f"%{resolved_subject}%"))
+    
+    if target_class:
+        filters.append(IngestionRegistry.target_class == target_class)
+        
+    stmt = stmt.filter(and_(*filters))
+    stmt = stmt.order_by(NCERTContent.embedding.cosine_distance(query_embedding))
+    stmt = stmt.limit(limit)
+
+    results = db.execute(stmt).scalars().all()
+    logger.info(
+        "NCERT vector search completed",
+        query=query[:30],
+        subject=subject,
+        results=len(results),
+    )
     return list(results)

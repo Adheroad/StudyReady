@@ -4,7 +4,8 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    PLAYWRIGHT_BROWSERS_PATH=/opt/playwright
 
 # Set working directory
 WORKDIR /app
@@ -23,18 +24,27 @@ RUN apt-get update && apt-get install -y \
     poppler-utils \
     fonts-noto-core \
     fonts-indic \
+    libgl1 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install Playwright Chromium browser and its system dependencies
+RUN mkdir -p /opt/playwright && \
+    playwright install --with-deps chromium && \
+    chmod -R 755 /opt/playwright
+
 # Copy application code
 COPY . .
 
 # Create unprivileged user
 RUN adduser --disabled-password --gecos '' appuser && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    chown -R appuser:appuser /opt/playwright
+
 USER appuser
 
 # Expose port

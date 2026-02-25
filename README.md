@@ -93,7 +93,7 @@ graph TD
 | **PDF Rendering** | WeasyPrint | High-fidelity HTML-to-PDF conversion with support for complex CSS (paged media). |
 ### Model Details
 
-- **Generation Model**: `google/gemini-2.0-flash-lite-001` (via OpenRouter) – used for paper generation and formatting.
+- **Generation Model**: `google/gemini-2.0-flash-001` (via OpenRouter) – used for paper generation and formatting. Highly recommended over Lite for blueprint compliance.
 - **Vision Model**: `google/gemini-2.0-flash-001` – employed for OCR and question extraction from CBSE PDFs.
 - **Embedding Model**: `openai/text-embedding-3-small` – creates vector embeddings for semantic search.
 - **Database**: PostgreSQL **16** with `pgvector` extension for efficient similarity search.
@@ -192,7 +192,7 @@ StudyReady/
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `GENERATION_MODEL` | LLM used for paper synthesis (OpenRouter) | `google/gemini-2.0-flash-lite-001` |
+| `GENERATION_MODEL` | LLM used for paper synthesis (OpenRouter) | `google/gemini-2.0-flash-001` |
 | `VISION_MODEL` | LLM used for OCR/OCR extraction | `google/gemini-2.0-flash-001` |
 | `EMBEDDING_MODEL` | Model for generating vector embeddings | `openai/text-embedding-3-small` |
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://studyready:password@localhost:5432/studyready` |

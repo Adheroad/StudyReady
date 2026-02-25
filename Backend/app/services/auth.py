@@ -102,17 +102,16 @@ def create_user(
 
 def create_admin_user(db: Session) -> Optional[User]:
     """Create the default admin user if it doesn't exist."""
-    admin_email = "admin@studyready.in"
+    admin_email = settings.ADMIN_EMAIL
     
     existing = get_user_by_email(db, admin_email)
     if existing:
         return existing
     
-    # Create admin user with specified password
     return create_user(
         db=db,
         email=admin_email,
-        password="67adMin76",
+        password=settings.ADMIN_PASSWORD,
         name="Admin",
         role="admin"
     )

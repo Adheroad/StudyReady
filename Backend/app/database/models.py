@@ -81,6 +81,8 @@ class GeneratedPaper(Base):
     section_config = Column(JSONB)  # Section structure used
     config = Column(JSONB)  # Store generation parameters
     formatted_content = Column(Text)  # Markdown formatted paper
+    pattern_hash = Column(String(64), nullable=True)  # SHA256 of pattern template used
+    validation_result = Column(JSONB, nullable=True)  # Validator output (marks check, coverage, etc.)
     output_pdf_path = Column(Text)
     output_docx_path = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -105,3 +107,43 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User {self.email}>"
+
+
+class IngestionRegistry(Base):
+    """Model for tracking NCERT PDF ingestion status (idempotency)."""
+
+    __tablename__ = "ingestion_registry"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source_url = Column(String(512), unique=True, nullable=False, index=True)
+    file_hash = Column(String(64), nullable=False)
+    target_class = Column(String(10), nullable=False, index=True)
+    subject = Column(String(100), nullable=False, index=True)
+    status = Column(String(20), nullable=False, default="downloaded")  # downloaded, embedded, failed
+    last_processed_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship to contents
+    chunks = relationship("NCERTContent", back_populates="source", cascade="all, delete-orphan")
+
+    def __repr__(self) -> str:
+        return f"<IngestionRegistry {self.source_url} [{self.status}]>"
+
+
+class NCERTContent(Base):
+    """Model for chunked NCERT textbook content with embeddings."""
+
+    __tablename__ = "ncert_contents"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    registry_id = Column(UUID(as_uuid=True), ForeignKey("ingestion_registry.id", ondelete="CASCADE"))
+    chunk_index = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    embedding = Column(Vector(1536))  # OpenAI embedding-3-small dimension
+    chunk_metadata = Column("metadata", JSONB)  # Store page numbers, chapter titles, etc. (db column 'metadata', mapped to 'chunk_metadata')
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship to registry
+    source = relationship("IngestionRegistry", back_populates="chunks")
+
+    def __repr__(self) -> str:
+        return f"<NCERTContent Chunk {self.chunk_index} for {self.registry_id}>"
