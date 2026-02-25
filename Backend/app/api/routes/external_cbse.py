@@ -1,49 +1,46 @@
-from fastapi import FastAPI, HTTPException
-from utils_cbse import get_all_previous_papers_cbse
-from files import download2client
-from get_paper import process_paper
+"""Router for external CBSE website scraping and browsing (legacy integration)."""
 
+from typing import Optional, List
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import Response
 
-app = FastAPI()
+# Import legacy logic
+# Note: We keep the imports relative to the services directory where they reside
+import sys
+import os
+sys.path.append(os.path.join(os.getcwd(), "services"))
 
-# API to load all papers dynamically
-@app.get("/dynamic_papers", tags=["Dynamic Paper"])
-async def root(year: str = None, grade: str = None, subject: str = None):
+try:
+    from utils_cbse import get_all_previous_papers_cbse
+    from files import download2client
+    from get_paper import process_paper
+except ImportError as e:
+    # Fallback for different execution contexts
+    sys.path.append("/home/adhero/Programming/StudyReady/Backend/services")
+    from utils_cbse import get_all_previous_papers_cbse
+    from files import download2client
+    from get_paper import process_paper
+
+router = APIRouter()
+
+@router.get("/papers", tags=["External CBSE"])
+async def list_external_papers(year: Optional[str] = None, grade: Optional[str] = None, subject: Optional[str] = None):
+    """Browse papers directly from CBSE website."""
     papers = get_all_previous_papers_cbse()
     if papers is None:
         raise HTTPException(status_code=500, detail="Failed to retrieve papers data")
+    
     results = [
         paper for paper in papers
         if paper is not None and (year is None or paper['year'] == year) and
            (grade is None or paper['grade'] == grade) and
-           (subject is None or paper['subject'].lower() == subject.lower())
+           (subject is None or subject.lower() in paper['subject'].lower())
     ]
     return results
 
-
-# Api to load paper by years
-@app.get("/papers/{year}", tags=["Papers by Filters"])
-async def list_by_year(year: str):
-    papers = get_all_previous_papers_cbse()
-    if papers is None:
-        raise HTTPException(status_code=500, detail="Failed to retrieve papers data")
-    
-    results = [p for p in papers if p is not None and p['year'] == year]
-    return results
-
-# Api to load paper by years and grade
-@app.get("/papers/{year}/{grade}", tags=["Papers by Filters"])
-async def list_by_year_grade(year: str, grade: str):
-    papers = get_all_previous_papers_cbse()
-    if papers is None:
-        raise HTTPException(status_code=500, detail="Failed to retrieve papers data")
-    
-    results = [p for p in papers if  p is not None and p['year'] == year and p['grade'] == grade]
-    return results
-
-# Api to load paper by years and grade
-@app.get("/papers/{year}/{grade}/{subject}", tags=["Papers by Filters"])
-async def get_paper(year: str, grade: str, subject: str):
+@router.get("/papers/{year}/{grade}/{subject}", tags=["External CBSE"])
+async def download_external_paper(year: str, grade: str, subject: str):
+    """Download a specific paper from CBSE."""
     papers = get_all_previous_papers_cbse()
     if papers is None:
         raise HTTPException(status_code=500, detail="Failed to retrieve papers data")
@@ -62,12 +59,13 @@ async def get_paper(year: str, grade: str, subject: str):
             detail=f"Paper not found for {subject} (Grade {grade}, Year {year})"
         )
     
+    # download2client normally returns a FileResponse or similar
     return download2client(paper)
 
-@app.get("/papers/{year}/{grade}/{subject}/text")
-async def get_paper_text(year: str, grade: str, subject: str):
+@router.get("/papers/{year}/{grade}/{subject}/text", tags=["External CBSE"])
+async def get_external_paper_text(year: str, grade: str, subject: str):
+    """Extract text from a specific CBSE paper using legacy process."""
     papers = get_all_previous_papers_cbse()
-    print("getting papers data")
     if papers is None:
         raise HTTPException(status_code=500, detail="Failed to retrieve papers data")
     
@@ -86,7 +84,6 @@ async def get_paper_text(year: str, grade: str, subject: str):
         )
     
     try:
-        print("Printing paper results")
         text = process_paper(paper)
         return {"text": text, "subject": subject, "year": year, "grade": grade}
     except Exception as e:
