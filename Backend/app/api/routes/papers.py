@@ -12,7 +12,7 @@ from app.api.schemas.paper_schemas import PaperGenerateRequest, PaperResponse
 from app.core.logging import get_logger
 from app.database.models import GeneratedPaper
 from app.services.generation.pipeline import generate_paper_pipeline
-from app.services.export import generate_pdf, generate_docx
+# from app.services.export import generate_pdf, generate_docx
 
 logger = get_logger(__name__)
 router = APIRouter()
